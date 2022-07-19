@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=63.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = ""
+version = "0.1.0"
+requires-python = ">=3.7"
+
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "bandit~=1.7",
+  "black~=22.6",
+  "flake8~=4.0",
+  "flake8-broken-line~=0.4",
+  "flake8-bugbear~=22.7",
+  "flake8-encodings[classes]~=0.5",
+  "flake8-comprehensions~=3.10",
+  "flake8-pytest-style~=1.6",
+  "flake8-simplify~=0.19",
+  "flake8-qgis~=1.0",
+  "isort~=5.10",
+  "pep8-naming~=0.13"
+]
+test = [
+  "pytest~=7.1",
+  "pytest-cov[all]~=3.0",
+  "pytest-flake8~=1.1",
+  "pytest-qgis~=1.3",
+  "pytest-xdist[psutil]~=2.5"
+]
+
+[tool.bandit]
+skips = [
+  "B101"  # assert_used
+]
+
+[tool.black]
+line-length = 119
+target-version = ['py37', 'py38', 'py39', 'py310']
+
+[tool.isort]
+profile = "black"
+line_length = 119
+skip_gitignore = true
