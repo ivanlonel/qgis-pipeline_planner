@@ -25,7 +25,7 @@
 
 
 # noinspection PyPep8Naming
-def classFactory(iface):  # pylint: disable=invalid-name
+def classFactory(iface):  # noqa: N802
     """Load PipelinePlanner class from file PipelinePlanner.
 
     :param iface: A QGIS interface instance.

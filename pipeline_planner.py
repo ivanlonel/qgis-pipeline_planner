@@ -27,11 +27,11 @@ from qgis.PyQt.QtCore import QCoreApplication, QSettings, QTranslator
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
+# Initialize Qt resources from file resources.py
+from . import resources  # noqa: F401
+
 # Import the code for the dialog
 from .pipeline_planner_dialog import PipelinePlannerDialog
-
-# Initialize Qt resources from file resources.py
-from .resources import *
 
 
 class PipelinePlanner:
@@ -154,7 +154,7 @@ class PipelinePlanner:
 
         return action
 
-    def initGui(self):
+    def initGui(self):  # noqa: N802
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
         icon_path = ":/plugins/pipeline_planner/icon.png"
