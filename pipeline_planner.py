@@ -21,15 +21,17 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+import os.path
+
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, QTranslator
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
-# Initialize Qt resources from file resources.py
-from .resources import *
 # Import the code for the dialog
 from .pipeline_planner_dialog import PipelinePlannerDialog
-import os.path
+
+# Initialize Qt resources from file resources.py
+from .resources import *
 
 
 class PipelinePlanner:
@@ -48,11 +50,8 @@ class PipelinePlanner:
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            'PipelinePlanner_{}.qm'.format(locale))
+        locale = QSettings().value("locale/userLocale")[:2]
+        locale_path = os.path.join(self.plugin_dir, "i18n", f"PipelinePlanner_{locale}.qm")
 
         if os.path.exists(locale_path):
             self.translator = QTranslator()
@@ -61,7 +60,7 @@ class PipelinePlanner:
 
         # Declare instance attributes
         self.actions = []
-        self.menu = self.tr(u'&Pipeline Planner')
+        self.menu = self.tr("&Pipeline Planner")
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -80,8 +79,7 @@ class PipelinePlanner:
         :rtype: QString
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('PipelinePlanner', message)
-
+        return QCoreApplication.translate("PipelinePlanner", message)
 
     def add_action(
         self,
@@ -93,7 +91,8 @@ class PipelinePlanner:
         add_to_toolbar=True,
         status_tip=None,
         whats_this=None,
-        parent=None):
+        parent=None,
+    ):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -149,9 +148,7 @@ class PipelinePlanner:
             self.iface.addToolBarIcon(action)
 
         if add_to_menu:
-            self.iface.addPluginToVectorMenu(
-                self.menu,
-                action)
+            self.iface.addPluginToVectorMenu(self.menu, action)
 
         self.actions.append(action)
 
@@ -160,32 +157,24 @@ class PipelinePlanner:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/pipeline_planner/icon.png'
-        self.add_action(
-            icon_path,
-            text=self.tr(u'Pipeline Planner'),
-            callback=self.run,
-            parent=self.iface.mainWindow())
+        icon_path = ":/plugins/pipeline_planner/icon.png"
+        self.add_action(icon_path, text=self.tr("Pipeline Planner"), callback=self.run, parent=self.iface.mainWindow())
 
         # will be set False in run()
         self.first_start = True
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginVectorMenu(
-                self.tr(u'&Pipeline Planner'),
-                action)
+            self.iface.removePluginVectorMenu(self.tr("&Pipeline Planner"), action)
             self.iface.removeToolBarIcon(action)
-
 
     def run(self):
         """Run method that performs all the real work"""
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
+        if self.first_start:
             self.first_start = False
             self.dlg = PipelinePlannerDialog()
 
