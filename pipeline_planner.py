@@ -26,6 +26,7 @@ import os.path
 from qgis.PyQt.QtCore import QCoreApplication, QSettings, QTranslator
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.utils import iface
 
 # Initialize Qt resources from file resources.py
 from . import resources  # noqa: F401
@@ -37,7 +38,7 @@ from .pipeline_planner_dialog import PipelinePlannerDialog
 class PipelinePlanner:
     """QGIS Plugin Implementation."""
 
-    def __init__(self, iface):
+    def __init__(self):
         """Constructor.
 
         :param iface: An interface instance that will be passed to this class
@@ -45,8 +46,6 @@ class PipelinePlanner:
             application at run time.
         :type iface: QgsInterface
         """
-        # Save reference to the QGIS interface
-        self.iface = iface
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
@@ -145,10 +144,10 @@ class PipelinePlanner:
 
         if add_to_toolbar:
             # Adds plugin icon to Plugins toolbar
-            self.iface.addToolBarIcon(action)
+            iface.addToolBarIcon(action)
 
         if add_to_menu:
-            self.iface.addPluginToVectorMenu(self.menu, action)
+            iface.addPluginToVectorMenu(self.menu, action)
 
         self.actions.append(action)
 
@@ -158,7 +157,7 @@ class PipelinePlanner:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
         icon_path = ":/plugins/pipeline_planner/icon.png"
-        self.add_action(icon_path, text=self.tr("Pipeline Planner"), callback=self.run, parent=self.iface.mainWindow())
+        self.add_action(icon_path, text=self.tr("Pipeline Planner"), callback=self.run, parent=iface.mainWindow())
 
         # will be set False in run()
         self.first_start = True
@@ -166,8 +165,8 @@ class PipelinePlanner:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginVectorMenu(self.tr("&Pipeline Planner"), action)
-            self.iface.removeToolBarIcon(action)
+            iface.removePluginVectorMenu(self.tr("&Pipeline Planner"), action)
+            iface.removeToolBarIcon(action)
 
     def run(self):
         """Run method that performs all the real work"""

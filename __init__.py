@@ -34,4 +34,4 @@ def classFactory(iface):  # noqa: N802
     #
     from .pipeline_planner import PipelinePlanner
 
-    return PipelinePlanner(iface)
+    return PipelinePlanner()
