@@ -23,9 +23,11 @@
 """
 import os.path
 
-from qgis.PyQt.QtCore import QCoreApplication, QSettings, QTranslator
+import qgis.core
+import qgis.gui
+from qgis.PyQt.QtCore import QCoreApplication, QSettings, Qt, QTranslator
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QMessageBox, QTableWidgetItem
 from qgis.utils import iface
 
 # Initialize Qt resources from file resources.py
@@ -61,9 +63,37 @@ class PipelinePlanner:
         self.actions = []
         self.menu = self.tr("&Pipeline Planner")
 
-        # Check if plugin was started the first time in current QGIS session
-        # Must be set in initGui() to survive plugin reloads
-        self.first_start = None
+        self.layers = {
+            "Raptor Buffer": {
+                "species": None,
+                "id_col": "Nest_ID",
+                "status_col": "recentstat",
+                "geom_func": lambda geom: geom.centroid(),
+            },
+            "BAEA Buffer": {
+                "species": "Bald Eagle",
+                "id_col": "nest_id",
+                "status_col": "status",
+                "geom_func": lambda geom: geom.centroid(),
+            },
+            "BUOWL Buffer": {
+                "species": "Burrowing Owl",
+                "id_col": "habitat_id",
+                "status_col": "recentstat",
+                "geom_func": lambda geom: geom.buffer(0.001, 5),
+            },
+        }
+
+        self.canvas = iface.mapCanvas()
+        self.addPipelinePoint = qgis.gui.QgsMapToolEmitPoint(self.canvas)
+        self.rbPipeline = qgis.gui.QgsRubberBand(self.canvas)
+        self.rbPipeline.setColor(Qt.red)
+        self.rbPipeline.setWidth(4)
+
+        self.dlg = PipelinePlannerDialog()
+        self.dlg.tbl_impacts.setColumnWidth(1, 50)
+        self.dlg.tbl_impacts.setColumnWidth(2, 250)
+        self.dlg.tbl_impacts.setColumnWidth(3, 75)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -159,8 +189,7 @@ class PipelinePlanner:
         icon_path = ":/plugins/pipeline_planner/icon.png"
         self.add_action(icon_path, text=self.tr("Pipeline Planner"), callback=self.run, parent=iface.mainWindow())
 
-        # will be set False in run()
-        self.first_start = True
+        self.addPipelinePoint.canvasClicked.connect(self.evaluate_pipeline)
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -171,18 +200,47 @@ class PipelinePlanner:
     def run(self):
         """Run method that performs all the real work"""
 
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start:
-            self.first_start = False
-            self.dlg = PipelinePlannerDialog()
+        self.canvas.setMapTool(self.addPipelinePoint)
 
-        # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            pass
+    def evaluate_pipeline(self, point, button):
+        if button == Qt.LeftButton:
+            self.rbPipeline.addPoint(point)
+            self.rbPipeline.show()
+        elif button == Qt.RightButton:
+            pipeline = self.rbPipeline.asGeometry()
+            self.rbPipeline.reset()
+
+            # QMessageBox.information(None, "Pipeline", pipeline.asWkt())
+
+            self.dlg.tbl_impacts.setRowCount(0)
+
+            project_instance = qgis.core.QgsProject.instance()
+            for layer_name, layer_dict in self.layers.items():
+                try:
+                    (layer,) = project_instance.mapLayersByName(layer_name)
+                except ValueError:
+                    QMessageBox.critical(
+                        self.dlg,
+                        "Problem with layer",
+                        f"There must be one and only one layer called {layer_name}",
+                    )
+                    return
+
+                for buffer in layer.getFeatures(pipeline.boundingBox()):
+                    if buffer.geometry().intersects(pipeline):
+                        row = self.dlg.tbl_impacts.rowCount()
+                        self.dlg.tbl_impacts.insertRow(row)
+                        self.dlg.tbl_impacts.setItem(
+                            row, 0, QTableWidgetItem(layer_dict["species"] or buffer.attribute("recentspec"))
+                        )
+                        self.dlg.tbl_impacts.setItem(
+                            row, 1, QTableWidgetItem(str(buffer.attribute(layer_dict["id_col"])))
+                        )
+                        self.dlg.tbl_impacts.setItem(
+                            row, 2, QTableWidgetItem(buffer.attribute(layer_dict["status_col"]))
+                        )
+                        location = layer_dict["geom_func"](buffer.geometry())
+                        self.dlg.tbl_impacts.setItem(row, 3, QTableWidgetItem(f"{pipeline.distance(location):.6f}"))
+
+            self.dlg.tbl_impacts.sortItems(3)
+            self.dlg.show()
