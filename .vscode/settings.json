@@ -1,12 +1,14 @@
 {
+  "editor.rulers": [
+    {"column": 109, "color": "#303030"},
+    119  // Use default color
+  ],
+
   "files.associations": {
-      "metadata.txt": "ini"
+    "metadata.txt": "ini"
   },
 
   "python.languageServer": "Pylance",
-
-  // PyQt Integration
-  "qtForPython.designer.path": "C:\\Program Files\\QGIS 3.16\\bin\\qgis-ltr-designer.bat",
 
   // Linter
   "python.linting.enabled": true,
@@ -22,6 +24,9 @@
       "source.organizeImports": true
     }
   },
+
+  // PyQt Integration
+  "qtForPython.designer.path": "C:\\Program Files\\QGIS 3.16\\bin\\qgis-ltr-designer.bat",
 
   // Replicate the QGIS environment (except PYTHONHOME and PYTHONPATH)
   "terminal.integrated.env.windows": {
